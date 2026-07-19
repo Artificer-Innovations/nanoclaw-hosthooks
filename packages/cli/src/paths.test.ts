@@ -56,6 +56,15 @@ describe('paths', () => {
     expect(findNanoclawRoot(path.join(root, 'container/agent-runner/src/nested'))).toBe(root);
   });
 
+  it('skips malformed package.json files while walking up', () => {
+    const root = temporary();
+    fs.writeFileSync(path.join(root, 'package.json'), '{"name":"nanoclaw-hosthooks"}');
+    const nested = path.join(root, 'packages/host');
+    fs.mkdirSync(nested, { recursive: true });
+    fs.writeFileSync(path.join(nested, 'package.json'), 'not json {');
+    expect(packageRoot(nested)).toBe(root);
+  });
+
   it('fails clearly when roots cannot be found', () => {
     const root = temporary();
     expect(() => packageRoot(root)).toThrow('package root');

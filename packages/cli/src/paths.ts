@@ -24,8 +24,12 @@ export function packageRoot(startDir: string = __dirname): string {
   for (;;) {
     const packagePath = path.join(dir, 'package.json');
     if (fs.existsSync(packagePath)) {
-      const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8')) as { name?: string };
-      if (pkg.name === 'nanoclaw-hosthooks') return dir;
+      try {
+        const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8')) as { name?: string };
+        if (pkg.name === 'nanoclaw-hosthooks') return dir;
+      } catch {
+        // Malformed package.json along the way must not mask a valid root higher up.
+      }
     }
     const parent = path.dirname(dir);
     if (parent === dir) break;

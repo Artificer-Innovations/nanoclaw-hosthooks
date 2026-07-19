@@ -224,6 +224,10 @@ function atomicWrite(target: string, content: Buffer, mode?: number): void {
 }
 
 function copyDirectory(source: string, destination: string): void {
+  // Never follow a symlinked destination: clearing through it would delete
+  // files outside the NanoClaw tree. Replace the link with a real directory.
+  const existing = fs.lstatSync(destination, { throwIfNoEntry: false });
+  if (existing && !existing.isDirectory()) fs.rmSync(destination, { force: true });
   fs.mkdirSync(destination, { recursive: true });
   for (const entry of fs.readdirSync(destination)) {
     fs.rmSync(path.join(destination, entry), { recursive: true, force: true });

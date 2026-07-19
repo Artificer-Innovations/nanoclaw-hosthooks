@@ -107,6 +107,25 @@ describe('installer', () => {
     expect(fs.existsSync(path.join(destination, 'stale'))).toBe(false);
   });
 
+  it('replaces a symlinked skill destination without deleting the link target', () => {
+    const root = makeHost();
+    const source = path.join(root, 'source-skill');
+    fs.mkdirSync(source, { recursive: true });
+    fs.writeFileSync(path.join(source, 'SKILL.md'), 'skill');
+
+    const outside = path.join(root, 'outside');
+    fs.mkdirSync(outside, { recursive: true });
+    fs.writeFileSync(path.join(outside, 'precious.txt'), 'keep me');
+    const destination = path.join(root, '.claude/skills/add-hosthooks');
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.symlinkSync(outside, destination);
+
+    syncSkillToFork(root, source);
+    expect(fs.readFileSync(path.join(outside, 'precious.txt'), 'utf8')).toBe('keep me');
+    expect(fs.lstatSync(destination).isSymbolicLink()).toBe(false);
+    expect(fs.readFileSync(path.join(destination, 'SKILL.md'), 'utf8')).toBe('skill');
+  });
+
   it('leaves an uninstalled stock host unchanged', () => {
     const root = makeHost();
     expect(runUninstall(root)).toEqual({ root, changed: [], removed: [] });
