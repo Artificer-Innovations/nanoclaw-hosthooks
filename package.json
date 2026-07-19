@@ -1,0 +1,61 @@
+{
+  "name": "nanoclaw-hosthooks",
+  "version": "0.1.0",
+  "description": "Composable host extension hooks for NanoClaw skills",
+  "type": "module",
+  "license": "MIT",
+  "author": "Artificer Innovations, LLC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Artificer-Innovations/nanoclaw-hosthooks"
+  },
+  "homepage": "https://github.com/Artificer-Innovations/nanoclaw-hosthooks",
+  "bugs": {
+    "url": "https://github.com/Artificer-Innovations/nanoclaw-hosthooks/issues"
+  },
+  "keywords": [
+    "nanoclaw",
+    "hooks",
+    "skills",
+    "extensions"
+  ],
+  "bin": {
+    "nanoclaw-hosthooks": "./dist/cli/bin.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "api-contract.md",
+    "README.md",
+    "QUICKSTART.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "pnpm --filter @nanoclaw-hosthooks/host build && pnpm --filter @nanoclaw-hosthooks/runner build && pnpm --filter @nanoclaw-hosthooks/cli build && node scripts/sync-resources.mjs && node scripts/verify-publish-entry.mjs",
+    "typecheck": "pnpm --filter @nanoclaw-hosthooks/host --filter @nanoclaw-hosthooks/runner --filter @nanoclaw-hosthooks/cli typecheck",
+    "test:unit": "pnpm -r test:unit",
+    "test:coverage": "pnpm --filter @nanoclaw-hosthooks/cli test:coverage",
+    "test:integration": "node scripts/run-integration.mjs",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release:publish": "npm publish --provenance --access public",
+    "prepublishOnly": "pnpm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.4",
+    "@types/node": "^22.15.30",
+    "@vitest/coverage-v8": "^3.2.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

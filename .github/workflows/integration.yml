@@ -1,0 +1,62 @@
+name: Integration
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+jobs:
+  fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:integration
+
+  upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: hosthooks
+      - uses: actions/checkout@v4
+        with:
+          repository: nanocoai/nanoclaw
+          path: nanoclaw
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: hosthooks/pnpm-lock.yaml
+      - uses: oven-sh/setup-bun@v2
+      - name: Build hosthooks
+        working-directory: hosthooks
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+      - name: Install into upstream NanoClaw
+        run: node hosthooks/dist/cli/bin.js install --path nanoclaw
+      - name: Typecheck host and runner
+        working-directory: nanoclaw
+        run: |
+          corepack prepare pnpm@10.33.0 --activate
+          pnpm install --frozen-lockfile
+          pnpm run typecheck
+          cd container/agent-runner
+          bun install --frozen-lockfile
+          bun run typecheck
+      - name: Verify and uninstall cleanly
+        run: |
+          node hosthooks/dist/cli/bin.js verify --path nanoclaw
+          node hosthooks/dist/cli/bin.js uninstall --path nanoclaw
+          git -C nanoclaw diff --exit-code
