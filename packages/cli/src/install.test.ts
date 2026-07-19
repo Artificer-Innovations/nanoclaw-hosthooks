@@ -42,20 +42,21 @@ describe('installer', () => {
     const root = makeHost();
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const installed = runInstall(root);
-    expect(installed.changed).toHaveLength(7);
+    expect(installed.changed).toHaveLength(9);
     expect(installed.version).toBe('0.1.0');
     expect(fs.existsSync(path.join(root, '.claude/skills/add-hosthooks/SKILL.md'))).toBe(true);
     expect(runVerify(root)).toEqual({ root, ok: true, issues: [] });
 
     const upgraded = runUpgrade(root);
     expect(upgraded.changed).toEqual([]);
-    expect(upgraded.unchanged).toHaveLength(7);
+    expect(upgraded.unchanged).toHaveLength(9);
     printInstallNextSteps(upgraded, { upgraded: true });
     expect(log.mock.calls.flat().join(' ')).toContain('Upgraded');
 
     const removed = runUninstall(root);
     expect(removed.changed).toHaveLength(5);
     expect(removed.removed).toContain('src/hosthooks.ts');
+    expect(removed.removed).toContain('src/warn-once.ts');
     expect(fs.readFileSync(path.join(root, 'src/router.ts'), 'utf8')).toBe(fixtureSources.router);
   });
 

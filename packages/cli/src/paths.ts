@@ -10,10 +10,12 @@ export interface CopyRule {
 }
 
 export const HOST_COPY_RULES: CopyRule[] = [
+  { source: 'warn-once.ts', dest: 'src/warn-once.ts' },
   { source: 'hosthooks.ts', dest: 'src/hosthooks.ts' },
 ];
 
 export const RUNNER_COPY_RULES: CopyRule[] = [
+  { source: 'warn-once.ts', dest: 'container/agent-runner/src/warn-once.ts' },
   { source: 'hosthooks.ts', dest: 'container/agent-runner/src/hosthooks.ts' },
 ];
 

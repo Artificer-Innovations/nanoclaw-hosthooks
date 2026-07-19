@@ -291,7 +291,9 @@ export function patchContainerRunner(source: string): string {
   const anchor = "  args.push('-e', `TZ=${TIMEZONE}`);";
   const block = marked(
     'container-env',
-    `  const hosthookEnv = runContainerEnvContributors([
+    `  // providerContribution is the buildContainerArgs parameter already in
+  // scope at the TZ anchor in stock NanoClaw (upstream/main).
+  const hosthookEnv = runContainerEnvContributors([
     'TZ',
     ...Object.keys(providerContribution.env ?? {}),
   ]);

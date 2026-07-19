@@ -32,8 +32,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "pnpm --filter @nanoclaw-hosthooks/host build && pnpm --filter @nanoclaw-hosthooks/runner build && pnpm --filter @nanoclaw-hosthooks/cli build && node scripts/sync-resources.mjs && node scripts/verify-publish-entry.mjs",
-    "typecheck": "pnpm --filter @nanoclaw-hosthooks/host --filter @nanoclaw-hosthooks/runner --filter @nanoclaw-hosthooks/cli typecheck",
+    "build": "pnpm --filter @nanoclaw-hosthooks/shared build && pnpm --filter @nanoclaw-hosthooks/host build && pnpm --filter @nanoclaw-hosthooks/runner build && pnpm --filter @nanoclaw-hosthooks/cli build && node scripts/sync-resources.mjs && node scripts/verify-publish-entry.mjs",
+    "typecheck": "pnpm --filter @nanoclaw-hosthooks/shared --filter @nanoclaw-hosthooks/host --filter @nanoclaw-hosthooks/runner --filter @nanoclaw-hosthooks/cli typecheck",
     "test:unit": "pnpm -r test:unit",
     "test:coverage": "pnpm --filter @nanoclaw-hosthooks/cli test:coverage",
     "test:integration": "node scripts/run-integration.mjs",

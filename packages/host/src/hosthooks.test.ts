@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getHosthooksCapabilities,
+  probeHosthooksCapabilities,
   registerContainerEnvContributor,
   registerDeliveryPolicy,
   registerOutboundContentTransform,
@@ -123,5 +124,14 @@ describe('host hook registries', () => {
     warnOnce('a', 'message');
     warnOnce('b', 'message', new Error('detail'));
     expect(warn).toHaveBeenCalledTimes(2);
+  });
+
+  it('probes capabilities without throwing on loader failure', () => {
+    expect(probeHosthooksCapabilities(() => getHosthooksCapabilities()).present).toBe(true);
+    expect(
+      probeHosthooksCapabilities(() => {
+        throw new Error('import failed');
+      }),
+    ).toEqual({ present: false, reason: 'absent', error: expect.any(Error) });
   });
 });

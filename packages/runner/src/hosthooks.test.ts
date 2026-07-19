@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getHosthooksCapabilities,
+  probeHosthooksCapabilities,
   registerInboundBatchObserver,
   registerProviderMessageObserver,
   registerProviderQueryOptionsContributor,
@@ -33,7 +34,7 @@ describe('runner hook registries', () => {
     expect(calls).toEqual(['ok', 'ok']);
     expect(warn.mock.calls.flat().join(' ')).toContain('throw');
     expect(warn.mock.calls.flat().join(' ')).toContain('Promise');
-    expect(warn.mock.calls.flat().join(' ')).toContain('25ms');
+    expect(warn.mock.calls.flat().join(' ')).toContain('advisory');
   });
 
   it('runs inbound observers with immutable-shaped batch context', () => {
@@ -94,5 +95,14 @@ describe('runner hook registries', () => {
     warnOnce('error', 'error', new Error('x'));
     warnOnce('plain', 'plain');
     expect(warn).toHaveBeenCalledTimes(2);
+  });
+
+  it('probes capabilities without throwing on loader failure', () => {
+    expect(probeHosthooksCapabilities(() => getHosthooksCapabilities()).present).toBe(true);
+    expect(
+      probeHosthooksCapabilities(() => {
+        throw new Error('missing');
+      }).present,
+    ).toBe(false);
   });
 });

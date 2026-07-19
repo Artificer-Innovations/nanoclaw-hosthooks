@@ -9,7 +9,9 @@ const required = [
   'api-contract.md',
   'skills/add-hosthooks/SKILL.md',
   'skills/add-hosthooks/resources/host/hosthooks.ts',
+  'skills/add-hosthooks/resources/host/warn-once.ts',
   'skills/add-hosthooks/resources/runner/hosthooks.ts',
+  'skills/add-hosthooks/resources/runner/warn-once.ts',
 ];
 const missing = required.filter((relativePath) => !fs.existsSync(path.join(root, relativePath)));
 if (missing.length > 0) {

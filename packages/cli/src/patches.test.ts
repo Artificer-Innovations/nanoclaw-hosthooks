@@ -46,6 +46,7 @@ describe('source transforms', () => {
     expect(patchClaudeProvider(claude)).toContain('runProviderMessageObservers');
     expect(patchPollLoop(poll)).toContain('runInboundBatchObservers(messages)');
     expect(patchContainerRunner(container)).toContain('runContainerEnvContributors');
+    expect(patchContainerRunner(container)).toContain('providerContribution.env');
   });
 
   it('fails loudly for missing and ambiguous anchors', () => {

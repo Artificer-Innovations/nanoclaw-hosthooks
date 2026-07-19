@@ -11,20 +11,23 @@ enable product behavior on its own. Skills such as `nanoclaw-webchat` and
 ```ts
 getHosthooksCapabilities(): {
   apiVersion: 1;
-  features: {
-    deliveryPolicy: boolean;
-    outboundContentTransform: boolean;
-    providerMessageObserver: boolean;
-    providerQueryOptions: boolean;
-    inboundBatchObserver: boolean;
-    containerEnv: boolean;
-  };
+  features: { ... };
   counts: Record<string, number>;
 };
+
+probeHosthooksCapabilities(load): 
+  | { present: true; apiVersion; features; counts }
+  | { present: false; reason: 'absent'; error? };
 ```
 
-- Import failure or missing modules → treat capabilities as **absent**.
-- Never throw from a probe path used by product skills.
+- `getHosthooksCapabilities()` is a synchronous snapshot of the loaded registry.
+  It does not itself perform I/O or dynamic import.
+- Product skills that dynamically import hosthooks should use
+  `probeHosthooksCapabilities(() => getHosthooksCapabilities())` (or wrap their
+  own `import()` / `require()` in that loader). Import failure or throw →
+  `{ present: false }` — never an uncaught exception from the probe path.
+- `apiVersion` is the gate for shape changes; consumers should reject hosts
+  whose version is below the required minimum.
 
 ## Registration model
 
@@ -88,9 +91,12 @@ Skill-global container environment contributor in `buildContainerArgs`.
 
 Hot-path observer after each Claude SDK activity yield.
 
-- Must be synchronous and non-blocking.
+- Must be synchronous and non-blocking by contract.
 - Promise returns warn once.
-- Duration over 25ms warns once.
+- `OBSERVER_BUDGET_MS` (25ms) is **advisory/telemetry only**, not an enforced
+  cap. JavaScript cannot preempt a running synchronous callback without a
+  worker; a 500ms observer still stalls the poll/provider loop for its full
+  duration before the warning fires. Skill authors must keep observers cheap.
 - Throw → warn naming the registrant and continue.
 
 ### `registerProviderQueryOptionsContributor`
@@ -104,7 +110,8 @@ Shallow-merge contributions into Claude SDK query options.
 
 Outer poll-loop observer after `getPendingMessages` (system messages filtered).
 
-- Same sync / non-blocking / 25ms budget contract as provider message observers.
+- Same sync / non-blocking / advisory 25ms budget contract as provider message
+  observers.
 - Fires when `messages.length > 0`, before the accumulate-only skip.
 
 ## Installer contract
@@ -128,5 +135,6 @@ Required call-site files:
 
 Copied modules:
 
+- `src/warn-once.ts` / `container/agent-runner/src/warn-once.ts`
 - `src/hosthooks.ts`
 - `container/agent-runner/src/hosthooks.ts`

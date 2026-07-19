@@ -1,5 +1,9 @@
+import { resetWarnOnceForTests, warnOnce } from './warn-once.js';
+
 export const HOSTHOOKS_API_VERSION = 1 as const;
+/** Advisory only — JS cannot preempt a synchronous callback. See api-contract.md. */
 export const OBSERVER_BUDGET_MS = 25;
+export { warnOnce } from './warn-once.js';
 
 export type ProviderMessageObserver = (
   message: unknown,
@@ -22,18 +26,10 @@ interface NamedRegistration<T> {
 const providerMessageObservers: NamedRegistration<ProviderMessageObserver>[] = [];
 const providerQueryContributors: NamedRegistration<ProviderQueryOptionsContributor>[] = [];
 const inboundBatchObservers: NamedRegistration<InboundBatchObserver>[] = [];
-const warned = new Set<string>();
 
 function assertRegistration(name: string, callback: unknown): void {
   if (!name.trim()) throw new Error('Hosthook registration name must not be empty');
   if (typeof callback !== 'function') throw new TypeError(`Hosthook "${name}" must be a function`);
-}
-
-export function warnOnce(key: string, message: string, error?: unknown): void {
-  if (warned.has(key)) return;
-  warned.add(key);
-  if (error === undefined) console.warn(`[nanoclaw-hosthooks] ${message}`);
-  else console.warn(`[nanoclaw-hosthooks] ${message}`, error);
 }
 
 export function registerProviderMessageObserver(
@@ -177,9 +173,30 @@ function runObserver(
     if (elapsed > OBSERVER_BUDGET_MS) {
       warnOnce(
         `${kind}-slow:${registration.name}`,
-        `Observer "${registration.name}" took ${elapsed.toFixed(1)}ms; budget is ${OBSERVER_BUDGET_MS}ms.`,
+        `Observer "${registration.name}" took ${elapsed.toFixed(1)}ms; advisory budget is ${OBSERVER_BUDGET_MS}ms (not enforced — synchronous JS cannot be preempted).`,
       );
     }
+  }
+}
+
+export type HosthooksCapabilitiesSnapshot = ReturnType<typeof getHosthooksCapabilities>;
+
+export type HosthooksProbeResult =
+  | ({ present: true } & HosthooksCapabilitiesSnapshot)
+  | { present: false; reason: 'absent'; error?: unknown };
+
+/**
+ * Safe probe for product skills that dynamically load hosthooks.
+ * Pass a loader that imports/calls getHosthooksCapabilities; import failures
+ * and throws become `{ present: false }` instead of escaping to the caller.
+ */
+export function probeHosthooksCapabilities(
+  load: () => HosthooksCapabilitiesSnapshot,
+): HosthooksProbeResult {
+  try {
+    return { present: true, ...load() };
+  } catch (error) {
+    return { present: false, reason: 'absent', error };
   }
 }
 
@@ -187,5 +204,5 @@ export function resetHosthooksForTests(): void {
   providerMessageObservers.length = 0;
   providerQueryContributors.length = 0;
   inboundBatchObservers.length = 0;
-  warned.clear();
+  resetWarnOnceForTests();
 }

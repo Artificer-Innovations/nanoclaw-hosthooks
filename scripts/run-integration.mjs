@@ -43,7 +43,9 @@ run('node', [bin, 'verify', '--path', work]);
 
 const required = [
   'src/hosthooks.ts',
+  'src/warn-once.ts',
   'container/agent-runner/src/hosthooks.ts',
+  'container/agent-runner/src/warn-once.ts',
   '.claude/skills/add-hosthooks/SKILL.md',
 ];
 for (const relativePath of required) {
@@ -64,12 +66,22 @@ if (
   throw new Error('accumulate security predicate was rewritten');
 }
 
+const container = fs.readFileSync(path.join(work, 'src/container-runner.ts'), 'utf8');
+if (!container.includes('function args(providerContribution')) {
+  throw new Error('container fixture lost providerContribution parameter');
+}
+if (!container.includes('providerContribution.env')) {
+  throw new Error('container-env patch missing providerContribution.env occupied-keys');
+}
+
 run('node', [bin, 'upgrade', '--path', work]);
 run('node', [bin, 'uninstall', '--path', work]);
 
 for (const relativePath of [
   'src/hosthooks.ts',
+  'src/warn-once.ts',
   'container/agent-runner/src/hosthooks.ts',
+  'container/agent-runner/src/warn-once.ts',
   '.claude/skills/add-hosthooks',
 ]) {
   if (fs.existsSync(path.join(work, relativePath))) {

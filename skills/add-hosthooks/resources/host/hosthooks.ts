@@ -1,4 +1,7 @@
+import { resetWarnOnceForTests, warnOnce } from './warn-once.js';
+
 export const HOSTHOOKS_API_VERSION = 1 as const;
+export { warnOnce } from './warn-once.js';
 
 export interface ValidatedInboundParse {
   text?: string;
@@ -61,18 +64,10 @@ interface NamedRegistration<T> {
 const deliveryPolicies: NamedRegistration<DeliveryPolicy>[] = [];
 const outboundTransforms: NamedRegistration<OutboundContentTransform>[] = [];
 const containerEnvContributors: NamedRegistration<ContainerEnvContributor>[] = [];
-const warned = new Set<string>();
 
 function assertRegistration(name: string, callback: unknown): void {
   if (!name.trim()) throw new Error('Hosthook registration name must not be empty');
   if (typeof callback !== 'function') throw new TypeError(`Hosthook "${name}" must be a function`);
-}
-
-export function warnOnce(key: string, message: string, error?: unknown): void {
-  if (warned.has(key)) return;
-  warned.add(key);
-  if (error === undefined) console.warn(`[nanoclaw-hosthooks] ${message}`);
-  else console.warn(`[nanoclaw-hosthooks] ${message}`, error);
 }
 
 export function registerDeliveryPolicy(name: string, policy: DeliveryPolicy): () => void {
@@ -236,6 +231,27 @@ export function getHosthooksCapabilities(): {
   };
 }
 
+export type HosthooksCapabilitiesSnapshot = ReturnType<typeof getHosthooksCapabilities>;
+
+export type HosthooksProbeResult =
+  | ({ present: true } & HosthooksCapabilitiesSnapshot)
+  | { present: false; reason: 'absent'; error?: unknown };
+
+/**
+ * Safe probe for product skills that dynamically load hosthooks.
+ * Pass a loader that imports/calls getHosthooksCapabilities; import failures
+ * and throws become `{ present: false }` instead of escaping to the caller.
+ */
+export function probeHosthooksCapabilities(
+  load: () => HosthooksCapabilitiesSnapshot,
+): HosthooksProbeResult {
+  try {
+    return { present: true, ...load() };
+  } catch (error) {
+    return { present: false, reason: 'absent', error };
+  }
+}
+
 function isDeliveryPolicyResult(value: unknown): value is DeliveryPolicyResult | null | undefined {
   if (value == null) return true;
   if (typeof value !== 'object' || Array.isArray(value)) return false;
@@ -259,5 +275,5 @@ export function resetHosthooksForTests(): void {
   deliveryPolicies.length = 0;
   outboundTransforms.length = 0;
   containerEnvContributors.length = 0;
-  warned.clear();
+  resetWarnOnceForTests();
 }
