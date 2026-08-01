@@ -539,7 +539,16 @@ export function patchContainerRunner(source: string): string {
     ["runContainerEnvContributors"],
     "container-import"
   );
-  const anchor = "  args.push('-e', `TZ=${TIMEZONE}`);";
+  // Prefer current upstream (nanocoai/nanoclaw); fall back to older hosts
+  // that still push TZ=${TIMEZONE} without containerConfig.
+  const anchors = [
+    "  args.push('-e', `TZ=${containerConfig.timezone ?? TIMEZONE}`);",
+    "  args.push('-e', `TZ=${TIMEZONE}`);",
+  ];
+  const anchor = anchors.find((candidate) => content.includes(candidate));
+  if (!anchor) {
+    throw new Error("Could not find container environment anchor");
+  }
   const block = marked(
     "container-env",
     `  // providerContribution is the buildContainerArgs parameter already in

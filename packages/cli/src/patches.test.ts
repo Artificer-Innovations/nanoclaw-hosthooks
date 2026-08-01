@@ -71,6 +71,17 @@ describe("source transforms", () => {
     expect(patchContainerRunner(container)).toContain(
       "providerContribution.env"
     );
+    expect(patchContainerRunner(container)).toContain(
+      "containerConfig.timezone ?? TIMEZONE"
+    );
+
+    const legacyContainer = container.replace(
+      "TZ=${containerConfig.timezone ?? TIMEZONE}",
+      "TZ=${TIMEZONE}"
+    );
+    expect(patchContainerRunner(legacyContainer)).toContain(
+      "runContainerEnvContributors"
+    );
   });
 
   it("upgrades an older poll import to include query-start observers", () => {
