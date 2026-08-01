@@ -7,6 +7,8 @@ export interface FileTransform {
   path: string;
   transform: (content: string) => string;
   uninstall: (content: string) => string;
+  /** Skip install/verify when the file is absent (optional providers). */
+  optional?: boolean;
 }
 
 function replaceOnce(
@@ -313,18 +315,20 @@ export function patchClaudeProvider(source: string): string {
     "claude-query-start",
   ];
   assertNoCorruptBlocks(source, markers);
-  if (
-    markers.every((name) => hasCompleteBlock(source, name)) &&
-    source.includes("runProviderQueryStartObservers")
-  ) {
-    return source;
-  }
+  // Widen imports before any early return so upgrades cannot leave call sites
+  // without the matching symbol.
   let content = ensureImportSymbols(
     source,
     "claude-import",
     "../hosthooks.js",
     CLAUDE_IMPORT_SYMBOLS
   );
+  if (
+    markers.every((name) => hasCompleteBlock(content, name)) &&
+    content.includes("runProviderQueryStartObservers")
+  ) {
+    return content;
+  }
   if (!hasCompleteBlock(content, "claude-query-options")) {
     content = replaceOnce(
       content,
@@ -384,18 +388,18 @@ export function patchPollLoop(source: string): string {
     "poll-session-init",
   ];
   assertNoCorruptBlocks(source, markers);
-  if (
-    markers.every((name) => hasCompleteBlock(source, name)) &&
-    source.includes("runProviderQueryStartObservers")
-  ) {
-    return source;
-  }
   let content = ensureImportSymbols(
     source,
     "poll-import",
     "./hosthooks.js",
     POLL_IMPORT_SYMBOLS
   );
+  if (
+    markers.every((name) => hasCompleteBlock(content, name)) &&
+    content.includes("runProviderQueryStartObservers")
+  ) {
+    return content;
+  }
   if (!hasCompleteBlock(content, "poll-observer")) {
     const anchor =
       "    const messages = getPendingMessages(isFirstPoll).filter((m) => m.kind !== 'system');";
@@ -462,10 +466,10 @@ export function unpatchPollLoop(source: string): string {
 export function patchCodexProvider(source: string): string {
   const markers = ["codex-import", "codex-query-start"];
   assertNoCorruptBlocks(source, markers);
-  if (markers.every((name) => hasCompleteBlock(source, name))) return source;
   let content = ensureImportSymbols(source, "codex-import", "../hosthooks.js", [
     "runProviderQueryStartObservers",
   ]);
+  if (markers.every((name) => hasCompleteBlock(content, name))) return content;
   if (!hasCompleteBlock(content, "codex-query-start")) {
     const anchor = "    async function* gen(): AsyncGenerator<ProviderEvent> {";
     const block = marked(
@@ -494,13 +498,13 @@ export function unpatchCodexProvider(source: string): string {
 export function patchOpenCodeProvider(source: string): string {
   const markers = ["opencode-import", "opencode-query-start"];
   assertNoCorruptBlocks(source, markers);
-  if (markers.every((name) => hasCompleteBlock(source, name))) return source;
   let content = ensureImportSymbols(
     source,
     "opencode-import",
     "../hosthooks.js",
     ["runProviderQueryStartObservers"]
   );
+  if (markers.every((name) => hasCompleteBlock(content, name))) return content;
   if (!hasCompleteBlock(content, "opencode-query-start")) {
     const anchor = "    async function* gen(): AsyncGenerator<ProviderEvent> {";
     const block = marked(
@@ -578,11 +582,13 @@ export const FILE_TRANSFORMS: FileTransform[] = [
     path: "container/agent-runner/src/providers/codex.ts",
     transform: patchCodexProvider,
     uninstall: unpatchCodexProvider,
+    optional: true,
   },
   {
     path: "container/agent-runner/src/providers/opencode.ts",
     transform: patchOpenCodeProvider,
     uninstall: unpatchOpenCodeProvider,
+    optional: true,
   },
   {
     path: "container/agent-runner/src/poll-loop.ts",

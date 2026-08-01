@@ -99,6 +99,43 @@ import { getPendingMessages } from './db.js';
     expect(patchPollLoop(upgraded)).toBe(upgraded);
   });
 
+  it("widens claude import even when marker blocks already look complete", () => {
+    const legacy = `// @nanoclaw-hosthooks:claude-import:begin
+import { runProviderMessageObservers, runProviderQueryOptionsContributors } from '../hosthooks.js';
+// @nanoclaw-hosthooks:claude-import:end
+${claude}`
+      .replace(
+        "        permissionMode: 'bypassPermissions',",
+        `// @nanoclaw-hosthooks:claude-query-options:begin
+        ...runProviderQueryOptionsContributors({ provider: 'claude' }),
+// @nanoclaw-hosthooks:claude-query-options:end
+        permissionMode: 'bypassPermissions',`
+      )
+      .replace(
+        "    const sdkResult = sdkQuery({",
+        `// @nanoclaw-hosthooks:claude-query-start:begin
+    runProviderQueryStartObservers({
+      provider: 'claude',
+      stage: 'sdk_query',
+      hasContinuation: Boolean(input.continuation),
+    });
+// @nanoclaw-hosthooks:claude-query-start:end
+    const sdkResult = sdkQuery({`
+      )
+      .replace(
+        "        yield { type: 'activity' };",
+        `        yield { type: 'activity' };
+// @nanoclaw-hosthooks:claude-observer:begin
+        runProviderMessageObservers(message, { provider: 'claude' });
+// @nanoclaw-hosthooks:claude-observer:end`
+      );
+    const upgraded = patchClaudeProvider(legacy);
+    expect(upgraded).toContain("runProviderQueryStartObservers");
+    expect(upgraded).toContain(
+      "import { runProviderMessageObservers, runProviderQueryOptionsContributors, runProviderQueryStartObservers } from '../hosthooks.js';"
+    );
+  });
+
   it("widens poll-import when peer markers nest inside the block", () => {
     const nested = `// @nanoclaw-hosthooks:poll-import:begin
 // @nanoclaw-sessionio:poll-loop-peer-import:begin

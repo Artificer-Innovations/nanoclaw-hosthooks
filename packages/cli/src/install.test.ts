@@ -89,6 +89,22 @@ describe("installer", () => {
     expect(result.issues).toContain("missing src/hosthooks.ts");
   });
 
+  it("skips optional provider files when absent", () => {
+    const root = makeHost();
+    fs.rmSync(
+      path.join(root, "container/agent-runner/src/providers/codex.ts")
+    );
+    fs.rmSync(
+      path.join(root, "container/agent-runner/src/providers/opencode.ts")
+    );
+    expect(() => runInstall(root)).not.toThrow();
+    const result = runVerify(root);
+    expect(result.ok).toBe(true);
+    expect(
+      result.issues.some((issue) => issue.includes("codex.ts"))
+    ).toBe(false);
+  });
+
   it("reports partial or corrupt hook call sites", () => {
     const root = makeHost();
     runInstall(root);
