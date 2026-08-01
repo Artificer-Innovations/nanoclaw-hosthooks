@@ -1,7 +1,9 @@
-import { query } from 'sdk';
-const options = {
+import { query as sdkQuery } from 'sdk';
+function query(input: { continuation?: string }) {
+    const sdkResult = sdkQuery({
         permissionMode: 'bypassPermissions',
-};
+    });
+}
 async function* events() {
         messageCount++;
 
