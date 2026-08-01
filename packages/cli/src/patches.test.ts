@@ -99,6 +99,34 @@ import { getPendingMessages } from './db.js';
     expect(patchPollLoop(upgraded)).toBe(upgraded);
   });
 
+  it("widens poll-import when peer markers nest inside the block", () => {
+    const nested = `// @nanoclaw-hosthooks:poll-import:begin
+// @nanoclaw-sessionio:poll-loop-peer-import:begin
+import fs from 'node:fs';
+// @nanoclaw-sessionio:poll-loop-peer-import:end
+import { runInboundBatchObservers } from './hosthooks.js';
+// @nanoclaw-hosthooks:poll-import:end
+${poll}`;
+    const withObserver = nested.replace(
+      "    const messages = getPendingMessages(isFirstPoll).filter((m) => m.kind !== 'system');\n",
+      `    const messages = getPendingMessages(isFirstPoll).filter((m) => m.kind !== 'system');
+// @nanoclaw-hosthooks:poll-observer:begin
+    if (messages.length > 0) {
+      runInboundBatchObservers(messages);
+    }
+// @nanoclaw-hosthooks:poll-observer:end
+`
+    );
+    const upgraded = patchPollLoop(withObserver);
+    expect(upgraded).toContain(
+      "import { runInboundBatchObservers, runProviderQueryStartObservers } from './hosthooks.js';"
+    );
+    expect(upgraded).toContain(
+      "@nanoclaw-sessionio:poll-loop-peer-import:begin"
+    );
+    expect(upgraded).toContain("poll-query-start:begin");
+  });
+
   it("fails loudly for missing and ambiguous anchors", () => {
     expect(() => patchRouter("import x from 'x';")).toThrow(
       "router engage policy"

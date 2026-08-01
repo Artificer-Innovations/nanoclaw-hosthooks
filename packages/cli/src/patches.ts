@@ -276,14 +276,18 @@ function ensureImportSymbols(
   if (!content.includes(begin(markerName))) {
     return installImport(content, modulePath, [...symbols], markerName);
   }
-  const pattern = new RegExp(
-    `${escapeRegExp(
-      begin(markerName)
-    )}\\r?\\nimport \\{([^}]*)\\} from '${escapeRegExp(
-      modulePath
-    )}';\\r?\\n${escapeRegExp(end(markerName))}`
+  const blockStart = content.indexOf(begin(markerName));
+  const blockEnd = content.indexOf(end(markerName), blockStart);
+  if (blockStart < 0 || blockEnd < 0) {
+    throw new Error(`Corrupt hosthooks import block: ${markerName}`);
+  }
+  const afterEnd = blockEnd + end(markerName).length;
+  const block = content.slice(blockStart, afterEnd);
+  // Allow nested peer markers inside the block (e.g. sessionio inside poll-import).
+  const importPattern = new RegExp(
+    `import \\{([^}]*)\\} from ['"]${escapeRegExp(modulePath)}['"];`
   );
-  const match = content.match(pattern);
+  const match = block.match(importPattern);
   if (!match) {
     throw new Error(`Corrupt hosthooks import block: ${markerName}`);
   }
@@ -296,10 +300,9 @@ function ensureImportSymbols(
     if (!merged.includes(symbol)) merged.push(symbol);
   }
   if (merged.length === existing.length) return content;
-  const replacement = `${begin(markerName)}\nimport { ${merged.join(
-    ", "
-  )} } from '${modulePath}';\n${end(markerName)}`;
-  return content.replace(pattern, replacement);
+  const nextImport = `import { ${merged.join(", ")} } from '${modulePath}';`;
+  const nextBlock = block.replace(importPattern, nextImport);
+  return content.slice(0, blockStart) + nextBlock + content.slice(afterEnd);
 }
 
 export function patchClaudeProvider(source: string): string {
