@@ -34,10 +34,12 @@ async function deliver() {
   );
 }
 `,
-  claude: `import { query } from 'sdk';
-const options = {
+  claude: `import { query as sdkQuery } from 'sdk';
+function query(input: { continuation?: string }) {
+    const sdkResult = sdkQuery({
         permissionMode: 'bypassPermissions',
-};
+    });
+}
 async function* events() {
         messageCount++;
 
@@ -48,11 +50,41 @@ async function* events() {
   poll: `import { getPendingMessages } from './db.js';
 async function poll() {
     const messages = getPendingMessages(isFirstPoll).filter((m) => m.kind !== 'system');
+    const query = config.provider.query({
+      prompt,
+      continuation,
+    });
+}
+async function processQuery(providerName: string) {
+      if (event.type === 'init') {
+        queryContinuation = event.continuation;
+      }
+}
+`,
+  codex: `import type { ProviderEvent } from './types.js';
+class CodexProvider {
+  query(input: { continuation?: string }) {
+    async function* gen(): AsyncGenerator<ProviderEvent> {
+      const server = self.runtime.spawnCodexAppServer();
+    }
+  }
+}
+`,
+  opencode: `import type { ProviderEvent } from './types.js';
+class OpenCodeProvider {
+  query(input: { continuation?: string }) {
+    async function* gen(): AsyncGenerator<ProviderEvent> {
+      const rt = await ensureSharedRuntime(self.options);
+    }
+  }
 }
 `,
   container: `import { TIMEZONE } from './config.js';
-function args(providerContribution: { env?: Record<string, string> } = {}) {
-  args.push('-e', \`TZ=\${TIMEZONE}\`);
+function args(
+  containerConfig: { timezone?: string } = {},
+  providerContribution: { env?: Record<string, string> } = {},
+) {
+  args.push('-e', \`TZ=\${containerConfig.timezone ?? TIMEZONE}\`);
   if (providerContribution.env) {
     for (const [key, value] of Object.entries(providerContribution.env)) {
       args.push('-e', \`\${key}=\${value}\`);

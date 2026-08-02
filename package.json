@@ -1,6 +1,6 @@
 {
   "name": "nanoclaw-hosthooks",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Composable host extension hooks for NanoClaw skills",
   "type": "module",
   "license": "MIT",

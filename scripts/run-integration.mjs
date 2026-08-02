@@ -67,7 +67,8 @@ if (
 }
 
 const container = fs.readFileSync(path.join(work, 'src/container-runner.ts'), 'utf8');
-if (!container.includes('function args(providerContribution')) {
+// Signature param uses `providerContribution:`; patch body uses `.env` — keep both.
+if (!container.includes('providerContribution:')) {
   throw new Error('container fixture lost providerContribution parameter');
 }
 if (!container.includes('providerContribution.env')) {

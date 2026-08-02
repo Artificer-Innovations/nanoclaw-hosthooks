@@ -35,7 +35,10 @@ export function runInstall(root?: string): InstallResult {
 
   for (const file of FILE_TRANSFORMS) {
     const absolutePath = path.join(nanoclawRoot, file.path);
-    if (!fs.existsSync(absolutePath)) throw new Error(`Missing required host file: ${file.path}`);
+    if (!fs.existsSync(absolutePath)) {
+      if (file.optional) continue;
+      throw new Error(`Missing required host file: ${file.path}`);
+    }
     const source = fs.readFileSync(absolutePath, 'utf8');
     const next = file.transform(source);
     stageIfChanged(pending, unchanged, absolutePath, file.path, Buffer.from(next));
@@ -66,7 +69,7 @@ export function runVerify(root?: string): { root: string; ok: boolean; issues: s
   for (const file of FILE_TRANSFORMS) {
     const absolutePath = path.join(nanoclawRoot, file.path);
     if (!fs.existsSync(absolutePath)) {
-      issues.push(`missing ${file.path}`);
+      if (!file.optional) issues.push(`missing ${file.path}`);
       continue;
     }
     const source = fs.readFileSync(absolutePath, 'utf8');

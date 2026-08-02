@@ -16,16 +16,17 @@ pnpm run build
 pnpm exec nanoclaw-hosthooks verify
 ```
 
-The installer adds six generic, append-only extension points:
+The installer adds generic, append-only extension points:
 
 - delivery policy
 - outbound content transform
 - provider message observer
 - provider query options contributor
 - inbound batch observer
+- provider query-start observer (`provider_query` / `sdk_query` / `session_init`)
 - container environment contributor
 
-It computes all five source transforms before writing, commits each file by
+It computes all source transforms before writing, commits each file by
 atomic rename, and rolls back committed files if a write fails. Re-running
 `install` or `upgrade` is idempotent.
 

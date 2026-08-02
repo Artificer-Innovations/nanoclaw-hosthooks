@@ -15,7 +15,7 @@ getHosthooksCapabilities(): {
   counts: Record<string, number>;
 };
 
-probeHosthooksCapabilities(load): 
+probeHosthooksCapabilities(load):
   | { present: true; apiVersion; features; counts }
   | { present: false; reason: 'absent'; error? };
 ```
@@ -114,6 +114,30 @@ Outer poll-loop observer after `getPendingMessages` (system messages filtered).
   observers.
 - Fires when `messages.length > 0`, before the accumulate-only skip.
 
+### `registerProviderQueryStartObserver`
+
+Lifecycle observer for provider query / harness boot / session init.
+
+```ts
+type ProviderQueryStartStage = "provider_query" | "sdk_query" | "session_init";
+
+type ProviderQueryStartContext = Readonly<{
+  provider: string;
+  stage: ProviderQueryStartStage;
+  hasContinuation?: boolean;
+}>;
+```
+
+Call sites (installer-patched):
+
+- `provider_query` — poll-loop immediately before `config.provider.query(...)`
+- `sdk_query` — Claude before `sdkQuery(...)`; Codex/OpenCode at start of the
+  `query()` async generator (before harness spawn / shared runtime)
+- `session_init` — poll-loop when a provider yields `{ type: 'init' }`
+
+Same sync / non-blocking / advisory 25ms budget contract as other observers.
+Capability flag: `features.providerQueryStart: true`.
+
 ## Installer contract
 
 Commands: `install`, `upgrade`, `sync-skill`, `verify`, `uninstall`.
@@ -132,6 +156,11 @@ Required call-site files:
 - `src/container-runner.ts`
 - `container/agent-runner/src/providers/claude.ts`
 - `container/agent-runner/src/poll-loop.ts`
+
+Optional provider call-site files (patched when present; skipped on Claude-only hosts):
+
+- `container/agent-runner/src/providers/codex.ts`
+- `container/agent-runner/src/providers/opencode.ts`
 
 Copied modules:
 

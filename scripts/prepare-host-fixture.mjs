@@ -96,8 +96,11 @@ async function deliver() {
 write(
   'src/container-runner.ts',
   `import { TIMEZONE } from './config.js';
-function args(providerContribution: { env?: Record<string, string> } = {}) {
-  args.push('-e', \`TZ=\${TIMEZONE}\`);
+function args(
+  containerConfig: { timezone?: string } = {},
+  providerContribution: { env?: Record<string, string> } = {},
+) {
+  args.push('-e', \`TZ=\${containerConfig.timezone ?? TIMEZONE}\`);
   if (providerContribution.env) {
     for (const [key, value] of Object.entries(providerContribution.env)) {
       args.push('-e', \`\${key}=\${value}\`);
@@ -109,10 +112,12 @@ function args(providerContribution: { env?: Record<string, string> } = {}) {
 
 write(
   'container/agent-runner/src/providers/claude.ts',
-  `import { query } from 'sdk';
-const options = {
+  `import { query as sdkQuery } from 'sdk';
+function query(input: { continuation?: string }) {
+    const sdkResult = sdkQuery({
         permissionMode: 'bypassPermissions',
-};
+    });
+}
 async function* events() {
         messageCount++;
 
@@ -127,6 +132,15 @@ write(
   `import { getPendingMessages } from './db.js';
 async function poll() {
     const messages = getPendingMessages(isFirstPoll).filter((m) => m.kind !== 'system');
+    const query = config.provider.query({
+      prompt,
+      continuation,
+    });
+}
+async function processQuery(providerName: string) {
+      if (event.type === 'init') {
+        queryContinuation = event.continuation;
+      }
 }
 `,
 );
