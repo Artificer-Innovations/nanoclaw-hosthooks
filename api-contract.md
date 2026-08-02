@@ -155,9 +155,12 @@ Required call-site files:
 - `src/delivery.ts`
 - `src/container-runner.ts`
 - `container/agent-runner/src/providers/claude.ts`
+- `container/agent-runner/src/poll-loop.ts`
+
+Optional provider call-site files (patched when present; skipped on Claude-only hosts):
+
 - `container/agent-runner/src/providers/codex.ts`
 - `container/agent-runner/src/providers/opencode.ts`
-- `container/agent-runner/src/poll-loop.ts`
 
 Copied modules:
 
