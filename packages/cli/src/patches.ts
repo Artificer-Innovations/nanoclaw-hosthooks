@@ -208,7 +208,7 @@ export function patchDelivery(source: string): string {
   const block = marked(
     "delivery-transform",
     `  const deliverContent = runOutboundContentTransforms({
-    content: msg.content,
+    content: deliveredContent,
     message: msg,
     session,
     agentGroup: getAgentGroup(session.agent_group_id),
@@ -223,7 +223,7 @@ export function patchDelivery(source: string): string {
   );
   content = replaceOnce(
     content,
-    "    msg.kind,\n    msg.content,\n    files,",
+    "    msg.kind,\n    deliveredContent,\n    files,",
     "    msg.kind,\n    deliverContent,\n    files,",
     "delivery content argument"
   );
@@ -233,7 +233,7 @@ export function patchDelivery(source: string): string {
 export function unpatchDelivery(source: string): string {
   let content = source.replace(
     "    msg.kind,\n    deliverContent,\n    files,",
-    "    msg.kind,\n    msg.content,\n    files,"
+    "    msg.kind,\n    deliveredContent,\n    files,"
   );
   content = removeMarkedBlock(content, "delivery-transform");
   return removeMarkedBlock(content, "delivery-import");
