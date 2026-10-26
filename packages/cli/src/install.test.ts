@@ -46,7 +46,7 @@ describe("installer", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const installed = runInstall(root);
     expect(installed.changed).toHaveLength(11);
-    expect(installed.version).toBe("0.2.0");
+    expect(installed.version).toBe("0.2.1");
     expect(
       fs.existsSync(path.join(root, ".claude/skills/add-hosthooks/SKILL.md"))
     ).toBe(true);
