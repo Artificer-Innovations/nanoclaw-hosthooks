@@ -55,7 +55,7 @@ write(
   `import { log } from './log.js';
 
 function route() {
-    const engages = evaluateEngage(agent, messageText, isMention, mg, effectiveThreadId);
+    const engages = await evaluateEngage(agent, messageText, isMention, mg, effectiveThreadId);
     const accessOk = engages;
     const scopeOk = engages;
     if (engages && accessOk && scopeOk) {

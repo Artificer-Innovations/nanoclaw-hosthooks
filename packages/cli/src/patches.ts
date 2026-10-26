@@ -83,10 +83,10 @@ export function patchRouter(source: string): string {
 
   content = replaceOnce(
     content,
-    "    const engages = evaluateEngage(agent, messageText, isMention, mg, effectiveThreadId);",
+    "    const engages = await evaluateEngage(agent, messageText, isMention, mg, effectiveThreadId);",
     marked(
       "router-policy",
-      `    const defaultEngages = evaluateEngage(agent, messageText, isMention, mg, effectiveThreadId);
+      `    const defaultEngages = await evaluateEngage(agent, messageText, isMention, mg, effectiveThreadId);
     const hosthooksPolicy = runDeliveryPolicies({
       event,
       parsed,
@@ -190,7 +190,7 @@ export function unpatchRouter(source: string): string {
   content = removeAndRestore(
     content,
     "router-policy",
-    "    const engages = evaluateEngage(agent, messageText, isMention, mg, effectiveThreadId);"
+    "    const engages = await evaluateEngage(agent, messageText, isMention, mg, effectiveThreadId);"
   );
   return removeMarkedBlock(content, "router-import");
 }
