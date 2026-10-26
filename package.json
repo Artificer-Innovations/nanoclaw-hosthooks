@@ -53,9 +53,23 @@
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.4",
     "@types/node": "^22.15.30",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "4.1.12",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "vite": "7.3.7",
+    "vitest": "4.1.12"
+  },
+  "pnpm": {
+    "overrides": {
+      "@vitest/coverage-v8": "4.1.12",
+      "@vitest/mocker": "4.1.12",
+      "js-yaml@>=3.0.0 <4": "3.15.2",
+      "js-yaml@>=4.0.0 <5": "4.3.2",
+      "nanoid": "3.3.18",
+      "postcss": "8.5.23",
+      "source-map-js": "1.2.2",
+      "vite": "7.3.7",
+      "vitest": "4.1.12"
+    }
   },
   "packageManager": "pnpm@9.15.0"
 }
