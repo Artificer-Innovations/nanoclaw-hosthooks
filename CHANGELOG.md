@@ -1,5 +1,11 @@
 # nanoclaw-hosthooks
 
+## 0.2.1
+
+### Patch Changes
+
+- Publish await evaluateEngage install patches required for NanoClaw 2026.10.1-rc.2.
+
 ## 0.2.0
 
 ### Minor Changes
