@@ -39,13 +39,11 @@ async function deliver() {
   claude: `import { query as sdkQuery } from 'sdk';
 function query(input: { continuation?: string }) {
     const sdkResult = sdkQuery({
-        permissionMode: 'bypassPermissions',
+        permissionMode: this.executionPolicy.permissionMode,
     });
 }
 async function* events() {
         messageCount++;
-
-        // Yield activity for every SDK event so the poll loop knows the agent is working
         yield { type: 'activity' };
 }
 `,

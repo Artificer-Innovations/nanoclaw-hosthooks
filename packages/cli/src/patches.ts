@@ -332,11 +332,11 @@ export function patchClaudeProvider(source: string): string {
   if (!hasCompleteBlock(content, "claude-query-options")) {
     content = replaceOnce(
       content,
-      "        permissionMode: 'bypassPermissions',",
+      "        permissionMode: this.executionPolicy.permissionMode,",
       `${marked(
         "claude-query-options",
         "        ...runProviderQueryOptionsContributors({ provider: 'claude' }),"
-      )}\n        permissionMode: 'bypassPermissions',`,
+      )}\n        permissionMode: this.executionPolicy.permissionMode,`,
       "Claude query options"
     );
   }
@@ -357,8 +357,6 @@ export function patchClaudeProvider(source: string): string {
   }
   if (!hasCompleteBlock(content, "claude-observer")) {
     const observerAnchor = `        messageCount++;
-
-        // Yield activity for every SDK event so the poll loop knows the agent is working
         yield { type: 'activity' };`;
     content = replaceOnce(
       content,
@@ -539,8 +537,27 @@ export function patchContainerRunner(source: string): string {
     ["runContainerEnvContributors"],
     "container-import"
   );
-  // Prefer current upstream (nanocoai/nanoclaw); fall back to older hosts
-  // that still push TZ=${TIMEZONE} without containerConfig.
+  // Current upstream composes a SessionSpec env object. Older hosts still
+  // push TZ as a docker -e flag.
+  const envAnchor = `    TZ: containerConfig.timezone ?? TIMEZONE,
+    ...mailboxEnvironment,
+  };`;
+  if (content.includes(envAnchor)) {
+    const block = marked(
+      "container-env",
+      `  const hosthookEnv = runContainerEnvContributors([
+    'TZ',
+    ...Object.keys(contribution.env ?? {}),
+  ]);
+  Object.assign(env, hosthookEnv);`
+    );
+    return replaceOnce(
+      content,
+      envAnchor,
+      `${envAnchor}\n${block}`,
+      "container environment"
+    );
+  }
   const anchors = [
     "  args.push('-e', `TZ=${containerConfig.timezone ?? TIMEZONE}`);",
     "  args.push('-e', `TZ=${TIMEZONE}`);",

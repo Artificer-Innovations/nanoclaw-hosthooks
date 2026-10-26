@@ -116,11 +116,11 @@ import { runProviderMessageObservers, runProviderQueryOptionsContributors } from
 // @nanoclaw-hosthooks:claude-import:end
 ${claude}`
       .replace(
-        "        permissionMode: 'bypassPermissions',",
+        "        permissionMode: this.executionPolicy.permissionMode,",
         `// @nanoclaw-hosthooks:claude-query-options:begin
         ...runProviderQueryOptionsContributors({ provider: 'claude' }),
 // @nanoclaw-hosthooks:claude-query-options:end
-        permissionMode: 'bypassPermissions',`
+        permissionMode: this.executionPolicy.permissionMode,`
       )
       .replace(
         "    const sdkResult = sdkQuery({",
