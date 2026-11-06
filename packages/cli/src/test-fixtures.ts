@@ -2,7 +2,7 @@ export const fixtureSources = {
   router: `import { log } from './log.js';
 
 function route() {
-    const engages = evaluateEngage(agent, messageText, isMention, mg, effectiveThreadId);
+    const engages = await evaluateEngage(agent, messageText, isMention, mg, effectiveThreadId);
     const accessOk = engages;
     const scopeOk = engages;
     if (engages && accessOk && scopeOk) {
@@ -23,12 +23,14 @@ async function deliverToAgent(
 `,
   delivery: `import { log } from './log.js';
 async function deliver() {
+  const deliveredContent =
+    content.type === 'ask_question' ? JSON.stringify({ ...content, fromAgent: true }) : msg.content;
   const platformMsgId = await deliveryAdapter.deliver(
     msg.channel_type,
     msg.platform_id,
     msg.thread_id,
     msg.kind,
-    msg.content,
+    deliveredContent,
     files,
     deliverInstance,
   );
@@ -37,13 +39,11 @@ async function deliver() {
   claude: `import { query as sdkQuery } from 'sdk';
 function query(input: { continuation?: string }) {
     const sdkResult = sdkQuery({
-        permissionMode: 'bypassPermissions',
+        permissionMode: this.executionPolicy.permissionMode,
     });
 }
 async function* events() {
         messageCount++;
-
-        // Yield activity for every SDK event so the poll loop knows the agent is working
         yield { type: 'activity' };
 }
 `,
